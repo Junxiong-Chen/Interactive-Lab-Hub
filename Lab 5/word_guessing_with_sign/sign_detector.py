@@ -13,7 +13,7 @@ cv2.namedWindow(window_name)
 
 # Run the camera and detect signs
 # return the predicted sign for detected hand
-def camera(duration=2):
+def camera(duration=5):
     letter_counts = {}
     start_time = time.time()
     last_letter = None
@@ -41,6 +41,7 @@ def camera(duration=2):
 
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
+        letter = None
         results = hands.process(frame_rgb)
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
@@ -71,14 +72,15 @@ def camera(duration=2):
             x2 = int(max(x_) * W) - 10
             y2 = int(max(y_) * H) - 10
 
-            prediction = model.predict([np.asarray(data_aux)])
+            prediction = model.predict([np.asarray(data_aux)[:42]])
             letter = str(prediction[0])
 
             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 0), 4)
             cv2.putText(frame,letter, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 1.3, (0, 0, 0), 3,
                         cv2.LINE_AA)
 
-        if letter == last_letter:
+        #print(letter)
+        if letter and letter == last_letter:
             # continuing the same sign
             if stable_start is None:
                 stable_start = time.time()
@@ -87,7 +89,8 @@ def camera(duration=2):
                 letter_counts[letter] = letter_counts.get(letter, 0) + 1
         else:
             stable_start = None
-
+        
+        #print(letter_counts)
         last_letter = letter
         cv2.imshow('frame', frame)
 
@@ -105,5 +108,10 @@ def camera(duration=2):
 
     # return the letter shown most consistently
     best_letter = max(letter_counts, key=letter_counts.get)
-    print(f"Detected letter: {best_letter}")
+    #print(f"Detected letter: {best_letter}")
     return best_letter
+
+
+if __name__ == "__main__":
+    while True:
+      camera()
